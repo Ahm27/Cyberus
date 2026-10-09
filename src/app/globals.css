@@ -154,8 +154,16 @@ a {
 .site-header > a {
   min-height: 44px;
 }
-.site-header strong {
-  font-size: clamp(0.75rem, 3.6vw, 1rem);
+.site-brand {
+  display: flex;
+  align-items: center;
+  color: inherit;
+  text-decoration: none;
+}
+.site-logo {
+  display: block;
+  width: clamp(155px, 22vw, 210px);
+  height: auto;
 }
 .hero-actions {
   display: flex;
@@ -218,6 +226,9 @@ a {
 @media (max-width: 430px) {
   .site-header .header-board {
     display: none;
+  }
+  .site-logo {
+    width: 170px;
   }
   .hero-actions {
     display: grid;

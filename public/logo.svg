@@ -1,6 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title">
-  <title id="title">Cyberus</title>
-  <path fill="#238F95" d="M128 12 224 47v72c0 61-38 105-96 125-58-20-96-64-96-125V47l96-35Z"/>
-  <path fill="#fff" d="M128 48a65 65 0 1 0 55 100h-35a34 34 0 1 1 0-40h35a65 65 0 0 0-55-60Z"/>
-  <path fill="#D9A520" d="m178 91 30 18-30 18v-11h-45v-14h45V91Z"/>
-</svg>

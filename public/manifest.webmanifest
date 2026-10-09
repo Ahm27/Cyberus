@@ -8,10 +8,10 @@
   "theme_color": "#238f95",
   "icons": [
     {
-      "src": "/logo.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "src": "/cyberus-icon.png",
+      "sizes": "1774x1774",
+      "type": "image/png",
+      "purpose": "any"
     }
   ]
 }

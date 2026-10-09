@@ -8,7 +8,10 @@ export const metadata: Metadata = {
   title: { default: "Cyberus Challenges", template: "%s · Cyberus" },
   description: "Cyberus Orientation Day beginner mini-CTF",
   manifest: "/manifest.webmanifest",
-  icons: { icon: "/logo.svg", apple: "/logo.svg" },
+  icons: {
+    icon: { url: "/cyberus-icon.png", type: "image/png" },
+    apple: "/cyberus-icon.png",
+  },
 };
 export const viewport: Viewport = {
   themeColor: "#238f95",
@@ -34,24 +37,17 @@ export default function RootLayout({
         >
           <Link
             href="/"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              color: "inherit",
-              textDecoration: "none",
-            }}
+            className="site-brand"
+            aria-label="Cyberus Challenges home"
           >
             <Image
-              src="/logo.svg"
-              width={38}
-              height={38}
-              alt="Cyberus"
+              src="/cyberus-logo.png"
+              width={1774}
+              height={887}
+              className="site-logo"
+              alt="Cyberus Stud — SeeCurity Encapsulated"
               priority
             />
-            <strong style={{ letterSpacing: ".05em" }}>
-              CYBERUS <span style={{ color: "var(--teal)" }}>CHALLENGES</span>
-            </strong>
           </Link>
           <Link href="/leaderboard" className="eyebrow header-board">
             Breach board

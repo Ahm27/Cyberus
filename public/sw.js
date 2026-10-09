@@ -1,5 +1,10 @@
-const CACHE = "cyberus-shell-v1";
-const SHELL = ["/offline", "/logo.svg", "/manifest.webmanifest"];
+const CACHE = "cyberus-shell-v2";
+const SHELL = [
+  "/offline",
+  "/cyberus-logo.png",
+  "/cyberus-icon.png",
+  "/manifest.webmanifest",
+];
 self.addEventListener("install", (event) =>
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(SHELL))),
 );

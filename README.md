@@ -77,4 +77,3 @@ The included unit suite validates flag/session primitives, all ten isolated chal
 - Offline progress is intentionally user-controlled and manually verified.
 - The default rate limiter is process-local; distributed production needs shared state.
 - The service worker caches only static/page-shell GET responses and never API responses. Users should load Offline Mode once before entering a known dead zone.
-- The repository did not include the official Cyberus logo asset, so `public/logo.svg` is a lightweight palette-matched placeholder intended to be replaced with the supplied official SVG or optimized WebP.
