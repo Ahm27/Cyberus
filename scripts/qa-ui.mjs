@@ -229,24 +229,29 @@ try {
   await waitFor(page, "document.querySelector('input')");
   await evaluate(
     page,
-    `(() => { const input = document.querySelector('input'); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, '103'); input.dispatchEvent(new Event('input', { bubbles: true })); })()`,
+    `(() => { const input = document.querySelector('input[aria-label="Website address"]'); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, 'https://campuslink.test/profile?id=103'); input.dispatchEvent(new Event('input', { bubbles: true })); })()`,
   );
   await evaluate(
     page,
-    `([...document.querySelectorAll('button')].find((button) => button.textContent.trim() === 'Investigate')).click()`,
+    `([...document.querySelectorAll('button')].find((button) => button.textContent.trim() === 'Go')).click()`,
   );
   await waitFor(
     page,
-    "document.body.innerText.includes('Evidence discovered')",
+    "document.body.innerText.includes('UNAUTHORIZED PROFILE EXPOSED') && document.body.innerText.includes('CHALLENGE EVIDENCE')",
+  );
+  const firstOfflineFlag = await evaluate(
+    page,
+    `document.body.innerText.match(/CYBERUS\{[A-Z0-9]+\}/)?.[0]`,
   );
   await evaluate(
     page,
-    `([...document.querySelectorAll('button')].find((button) => button.textContent.includes('Record offline solve'))).click()`,
+    `(() => { const input = document.querySelector('input[placeholder="CYBERUS{…}"]'); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, ${JSON.stringify(firstOfflineFlag)}); input.dispatchEvent(new Event('input', { bubbles: true })); })()`,
   );
-  await waitFor(
+  await evaluate(
     page,
-    "document.body.innerText.includes('OFFLINE BREACH RECORDED')",
+    `([...document.querySelectorAll('button')].find((button) => button.textContent.trim() === 'Submit flag')).click()`,
   );
+  await waitFor(page, "document.body.innerText.includes('FLAG ACCEPTED')");
   await page.send("Page.reload", { ignoreCache: true });
   await waitFor(page, "document.querySelectorAll('article').length === 10");
   assert.ok(
@@ -257,7 +262,7 @@ try {
   );
   console.log("PASS offline solve survives a browser refresh in IndexedDB");
 
-  async function solveOfflineChallenge(title, answer) {
+  async function solveOfflineChallenge(title, answer, actionLabel) {
     await evaluate(
       page,
       `([...document.querySelectorAll('article')].find((card) => card.textContent.includes(${JSON.stringify(title)})).querySelector('button')).click()`,
@@ -265,24 +270,29 @@ try {
     await waitFor(page, "document.querySelector('input')");
     await evaluate(
       page,
-      `(() => { const input = document.querySelector('input'); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, ${JSON.stringify(answer)}); input.dispatchEvent(new Event('input', { bubbles: true })); })()`,
+      `(() => { const inputs = [...document.querySelectorAll('input')].filter((input) => input.placeholder !== 'CYBERUS{…}'); const input = inputs[0]; Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, ${JSON.stringify(answer)}); input.dispatchEvent(new Event('input', { bubbles: true })); })()`,
     );
     await evaluate(
       page,
-      `([...document.querySelectorAll('button')].find((button) => button.textContent.trim() === 'Investigate')).click()`,
+      `([...document.querySelectorAll('button')].find((button) => button.textContent.trim() === ${JSON.stringify(actionLabel)})).click()`,
     );
     await waitFor(
       page,
-      "document.body.innerText.includes('Evidence discovered')",
+      "document.body.innerText.includes('CHALLENGE EVIDENCE')",
+    );
+    const localFlag = await evaluate(
+      page,
+      `document.body.innerText.match(/CYBERUS\{[A-Z0-9]+\}/)?.[0]`,
     );
     await evaluate(
       page,
-      `([...document.querySelectorAll('button')].find((button) => button.textContent.includes('Record offline solve'))).click()`,
+      `(() => { const input = document.querySelector('input[placeholder="CYBERUS{…}"]'); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, ${JSON.stringify(localFlag)}); input.dispatchEvent(new Event('input', { bubbles: true })); })()`,
     );
-    await waitFor(
+    await evaluate(
       page,
-      "document.body.innerText.includes('OFFLINE BREACH RECORDED')",
+      `([...document.querySelectorAll('button')].find((button) => button.textContent.trim() === 'Submit flag')).click()`,
     );
+    await waitFor(page, "document.body.innerText.includes('FLAG ACCEPTED')");
     await evaluate(
       page,
       `([...document.querySelectorAll('button')].find((button) => button.textContent.includes('All challenges'))).click()`,
@@ -290,8 +300,56 @@ try {
     await waitFor(page, "document.querySelectorAll('article').length === 10");
   }
 
-  await solveOfflineChallenge("ADMIN? SAYS WHO?", "/challenge-admin");
-  await solveOfflineChallenge("YOU'VE BEEN PHISHED", "phish");
+  await solveOfflineChallenge(
+    "ADMIN? SAYS WHO?",
+    "https://novadesk.test/challenge-admin",
+    "Go",
+  );
+
+  await evaluate(
+    page,
+    `([...document.querySelectorAll('article')].find((card) => card.textContent.includes("YOU'VE BEEN PHISHED")).querySelector('button')).click()`,
+  );
+  await waitFor(page, "document.body.innerText.includes('Mailbox')");
+  await evaluate(
+    page,
+    `(() => { const input = [...document.querySelectorAll('input')].find((item) => item.placeholder === 'name@example.com'); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, 'library@university.edu'); input.dispatchEvent(new Event('input', { bubbles: true })); })()`,
+  );
+  await evaluate(
+    page,
+    `([...document.querySelectorAll('button')].find((button) => button.textContent.trim() === 'Investigate')).click()`,
+  );
+  await waitFor(
+    page,
+    "document.body.innerText.includes('Inbox refreshed after wrong answer')",
+  );
+  await evaluate(
+    page,
+    `(() => { const input = [...document.querySelectorAll('input')].find((item) => item.placeholder === 'name@example.com'); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, 'accounts@cyberus-alerts.co'); input.dispatchEvent(new Event('input', { bubbles: true })); })()`,
+  );
+  await evaluate(
+    page,
+    `([...document.querySelectorAll('button')].find((button) => button.textContent.trim() === 'Investigate')).click()`,
+  );
+  await waitFor(page, "document.body.innerText.includes('CHALLENGE EVIDENCE')");
+  const phishingOfflineFlag = await evaluate(
+    page,
+    `document.body.innerText.match(/CYBERUS\{[A-Z0-9]+\}/)?.[0]`,
+  );
+  await evaluate(
+    page,
+    `(() => { const input = document.querySelector('input[placeholder="CYBERUS{…}"]'); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, ${JSON.stringify(phishingOfflineFlag)}); input.dispatchEvent(new Event('input', { bubbles: true })); })()`,
+  );
+  await evaluate(
+    page,
+    `([...document.querySelectorAll('button')].find((button) => button.textContent.trim() === 'Submit flag')).click()`,
+  );
+  await waitFor(page, "document.body.innerText.includes('FLAG ACCEPTED')");
+  await evaluate(
+    page,
+    `([...document.querySelectorAll('button')].find((button) => button.textContent.includes('All challenges'))).click()`,
+  );
+  await waitFor(page, "document.querySelectorAll('article').length === 10");
   assert.ok(
     await evaluate(
       page,
@@ -305,6 +363,40 @@ try {
   );
   console.log(
     "PASS third offline solve unlocks persistent manual prize eligibility",
+  );
+
+  async function assertOfflineSimulator(title, expectedText) {
+    await evaluate(
+      page,
+      `([...document.querySelectorAll('article')].find((card) => card.textContent.includes(${JSON.stringify(title)})).querySelector('button')).click()`,
+    );
+    await waitFor(
+      page,
+      `document.body.innerText.includes(${JSON.stringify(expectedText)})`,
+    );
+    const simulatorLayout = await layout(page);
+    assert.equal(simulatorLayout.scrollWidth, 360);
+    assert.deepEqual(simulatorLayout.overflowing, []);
+    await evaluate(
+      page,
+      `([...document.querySelectorAll('button')].find((button) => button.textContent.includes('All challenges'))).click()`,
+    );
+    await waitFor(page, "document.querySelectorAll('article').length === 10");
+  }
+
+  for (const [title, marker] of [
+    ["SECRET MESSAGE", "Unknown attacker"],
+    ["64 REASONS", "Threat Intel"],
+    ["WHO'S ON THE WI-FI?", "Router Admin"],
+    ["KNOCK KNOCK", "Service Exposure Monitor"],
+    ["COOKIE MONSTER", "Dev tools"],
+    ["SOURCE NEVER LIES", "Northstar"],
+    ["TRUST NO INPUT", "QueryGate"],
+  ]) {
+    await assertOfflineSimulator(title, marker);
+  }
+  console.log(
+    "PASS all ten offline challenges use the full interactive simulator UI",
   );
 
   await assertWidths(page, "/", "document.readyState === 'complete'");
@@ -628,7 +720,7 @@ try {
   await assertWidths(
     page,
     "/admin",
-    "document.body.innerText.includes('EVENT CONTROL')",
+    "document.body.innerText.includes('EVENT OPERATIONS')",
   );
   await page.send("Emulation.setDeviceMetricsOverride", {
     width: 360,
@@ -639,7 +731,7 @@ try {
   await navigate(
     page,
     "/admin",
-    "document.body.innerText.includes('EVENT CONTROL')",
+    "document.body.innerText.includes('EVENT OPERATIONS')",
   );
   await screenshot(page, "admin-360");
   console.log("PASS staff and admin screens fit every requested phone width");

@@ -1981,6 +1981,11 @@
     overflow-x: auto;
     padding: 10px;
   }
+  .routerBody aside {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    overflow: hidden;
+  }
   .mailSidebar strong {
     margin: 8px;
     white-space: nowrap;

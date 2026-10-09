@@ -1,4 +1,4 @@
-const CACHE = "cyberus-shell-v2";
+const CACHE = "cyberus-shell-v3";
 const SHELL = [
   "/offline",
   "/cyberus-logo.png",

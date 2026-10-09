@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { AdminConsole } from "@/components/admin-console";
 import { LogoutButton } from "@/components/logout-button";
 import { hintProgress } from "@/lib/hints";
+import styles from "@/components/admin-console.module.css";
 export const dynamic = "force-dynamic";
 export default async function AdminPage() {
   const admin = await getAdmin();
@@ -83,45 +84,86 @@ export default async function AdminPage() {
   const completions = solveCounts.filter(
     (participant) => participant._count.solves === 10,
   ).length;
+  const metrics = [
+    {
+      label: "Online registrations",
+      value: participants,
+      detail: "Participants registered on the platform",
+    },
+    {
+      label: "Offline prizes verified",
+      value: offline,
+      detail: "Offline results manually accepted by staff",
+    },
+    {
+      label: "Completed challenges",
+      value: totalSolves,
+      detail: "Successful challenge solves across the event",
+    },
+    {
+      label: "Hints revealed",
+      value: totalHintsUnlocked,
+      detail: "Hints unlocked after failed attempts",
+    },
+    {
+      label: "Prize eligible",
+      value: eligible,
+      detail: "Online participants who completed three challenges",
+    },
+    {
+      label: "Prizes redeemed",
+      value: claimed,
+      detail: "Online prizes confirmed by staff",
+    },
+    {
+      label: "Full completions",
+      value: completions,
+      detail: "Participants who completed all ten challenges",
+    },
+  ];
   return (
-    <main className="shell" style={{ padding: "22px 0 70px" }}>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          gap: 12,
-        }}
-      >
+    <main className={`shell ${styles.page}`}>
+      <header className={styles.hero}>
         <div>
-          <p className="eyebrow">Protected administration</p>
-          <h1 style={{ fontSize: "clamp(2.2rem,8vw,4rem)", margin: "8px 0" }}>
-            EVENT CONTROL
-          </h1>
+          <p className={`eyebrow ${styles.heroEyebrow}`}>
+            Administrator workspace
+          </p>
+          <h1>EVENT OPERATIONS</h1>
+          <p>
+            Monitor participation, control participant-facing features, edit
+            challenge guidance, and help learners recover broken instances.
+          </p>
         </div>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        <div className={styles.heroActions}>
           <Link className="btn secondary" href="/staff/claim">
-            Prize control
+            Verify prizes
           </Link>
           <LogoutButton staff />
         </div>
-      </div>
-      <section className="grid-cards" style={{ margin: "24px 0" }}>
-        {[
-          ["Total participants", participants],
-          ["Online participants", participants],
-          ["Offline verified", offline],
-          ["Total solves", totalSolves],
-          ["Hints unlocked", totalHintsUnlocked],
-          ["Prize eligible", eligible],
-          ["Prizes claimed", claimed],
-          ["10/10 completions", completions],
-        ].map(([label, value]) => (
-          <div className="card" style={{ padding: 20 }} key={label}>
-            <p className="eyebrow">{label}</p>
-            <strong style={{ fontSize: 34 }}>{value}</strong>
+      </header>
+      <section
+        className={styles.metricSection}
+        aria-labelledby="event-snapshot"
+      >
+        <header className={styles.metricSectionHeader}>
+          <div>
+            <p className="eyebrow">Live event data</p>
+            <h2 id="event-snapshot">Event snapshot</h2>
           </div>
-        ))}
+          <p className={styles.helperText}>
+            Counts refresh from the event database whenever this page loads or
+            an administrative action completes.
+          </p>
+        </header>
+        <div className={styles.metricCards}>
+          {metrics.map((metric) => (
+            <article className={`card ${styles.metricCard}`} key={metric.label}>
+              <p className="eyebrow">{metric.label}</p>
+              <strong>{metric.value}</strong>
+              <small>{metric.detail}</small>
+            </article>
+          ))}
+        </div>
       </section>
       <AdminConsole
         event={{ leaderboardEnabled: event.config?.leaderboardEnabled ?? true }}

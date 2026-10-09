@@ -16,11 +16,11 @@ export async function POST(request: NextRequest) {
   if (!admin) return jsonError("Admin session required.", 401);
   const parsed = schema.safeParse(await request.json().catch(() => null));
   if (!parsed.success)
-    return jsonError("University ID and challenge are required.");
+    return jsonError("Enter a valid University ID and choose a challenge.");
   const event = await db.event.findUnique({
     where: { slug: process.env.EVENT_SLUG || "orientation-2026" },
   });
-  if (!event) return jsonError("Event missing.", 404);
+  if (!event) return jsonError("The configured event could not be found.", 404);
   const participant = await db.participant.findUnique({
     where: {
       eventId_universityIdNormalized: {
@@ -29,11 +29,13 @@ export async function POST(request: NextRequest) {
       },
     },
   });
-  if (!participant) return jsonError("Participant not found.", 404);
+  if (!participant)
+    return jsonError("No online participant matches that University ID.", 404);
   const challenge = await db.challenge.findFirst({
     where: { id: parsed.data.challengeId, eventId: event.id },
   });
-  if (!challenge) return jsonError("Challenge not found.", 404);
+  if (!challenge)
+    return jsonError("That challenge is unavailable. Refresh the page.", 404);
   const solved = await db.participantSolve.findUnique({
     where: {
       participantId_challengeId: {
@@ -44,7 +46,7 @@ export async function POST(request: NextRequest) {
   });
   if (solved)
     return jsonError(
-      "Solved instances are immutable; the solve already counts.",
+      "This participant already solved the challenge, so its flag cannot be reset.",
       409,
     );
   const instance = await rotateInstance(participant.id, challenge.id);

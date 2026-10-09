@@ -11,11 +11,12 @@ export async function PATCH(request: NextRequest) {
   const parsed = z
     .object({ leaderboardEnabled: z.boolean() })
     .safeParse(await request.json().catch(() => null));
-  if (!parsed.success) return jsonError("Invalid configuration.");
+  if (!parsed.success)
+    return jsonError("Choose whether the public leaderboard is visible.");
   const event = await db.event.findUnique({
     where: { slug: process.env.EVENT_SLUG || "orientation-2026" },
   });
-  if (!event) return jsonError("Event missing.", 404);
+  if (!event) return jsonError("The configured event could not be found.", 404);
   await db.$transaction([
     db.eventConfig.upsert({
       where: { eventId: event.id },
