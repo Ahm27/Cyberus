@@ -1,0 +1,10 @@
+node_modules
+.next
+.env
+.env.local
+coverage
+qa-artifacts
+*.log
+*.tsbuildinfo
+.DS_Store
+src/generated/prisma

@@ -1,0 +1,203 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum InstanceStatus {
+  ACTIVE
+  INVALIDATED
+  SOLVED
+}
+
+enum Difficulty {
+  EASY
+  EASY_MEDIUM
+  MEDIUM
+}
+
+enum ChallengeType {
+  IDOR
+  ACCESS_CONTROL
+  CAESAR
+  BASE64
+  PHISHING
+  NETWORK
+  PORTS
+  CLIENT_TRUST
+  SOURCE
+  SQLI
+}
+
+model Event {
+  id           String        @id @default(cuid())
+  slug         String        @unique
+  name         String
+  startsAt     DateTime?
+  participants Participant[]
+  challenges   Challenge[]
+  offlineClaims OfflinePrizeClaim[]
+  config       EventConfig?
+  createdAt    DateTime      @default(now())
+}
+
+model EventConfig {
+  id                 String  @id @default(cuid())
+  eventId            String  @unique
+  leaderboardEnabled Boolean @default(true)
+  event              Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+}
+
+model Participant {
+  id                     String              @id @default(cuid())
+  eventId                String
+  fullName               String
+  phoneNormalized        String
+  universityIdNormalized String
+  hackerAlias            String
+  createdAt              DateTime            @default(now())
+  event                  Event               @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  sessions               ParticipantSession[]
+  instances              ChallengeInstance[]
+  attempts               ChallengeAttempt[]
+  solves                 ParticipantSolve[]
+  prizeClaim             PrizeClaim?
+  @@unique([eventId, universityIdNormalized])
+  @@index([eventId, createdAt])
+}
+
+model ParticipantSession {
+  id           String      @id @default(cuid())
+  participantId String
+  tokenHash    String      @unique
+  expiresAt    DateTime
+  createdAt    DateTime    @default(now())
+  participant  Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  @@index([participantId, expiresAt])
+}
+
+model Challenge {
+  id                     String              @id @default(cuid())
+  eventId                String
+  number                 Int
+  slug                   String
+  title                  String
+  category               String
+  difficulty             Difficulty
+  type                   ChallengeType
+  shortDescription       String
+  instructions           String
+  hints                  Json
+  educationalExplanation String
+  enabled                Boolean             @default(true)
+  event                  Event               @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  instances              ChallengeInstance[]
+  attempts               ChallengeAttempt[]
+  solves                 ParticipantSolve[]
+  @@unique([eventId, number])
+  @@unique([eventId, slug])
+  @@index([eventId, enabled])
+}
+
+model ChallengeInstance {
+  id            String         @id @default(cuid())
+  participantId String
+  challengeId   String
+  activeKey     String?        @unique
+  flagHash      String
+  flagCiphertext String
+  status        InstanceStatus @default(ACTIVE)
+  createdAt     DateTime       @default(now())
+  invalidatedAt DateTime?
+  participant   Participant    @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  challenge     Challenge      @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  attempts      ChallengeAttempt[]
+  @@index([participantId, challengeId, status])
+}
+
+model ChallengeAttempt {
+  id            String            @id @default(cuid())
+  participantId String
+  challengeId   String
+  instanceId    String
+  correct       Boolean
+  createdAt     DateTime          @default(now())
+  participant   Participant       @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  challenge     Challenge         @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  instance      ChallengeInstance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  @@index([participantId, createdAt])
+  @@index([challengeId, correct])
+}
+
+model ParticipantSolve {
+  id            String      @id @default(cuid())
+  participantId String
+  challengeId   String
+  solvedAt      DateTime    @default(now())
+  participant   Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  challenge     Challenge   @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  @@unique([participantId, challengeId])
+  @@index([challengeId, solvedAt])
+}
+
+model PrizeClaim {
+  id            String      @id @default(cuid())
+  participantId String      @unique
+  claimCode     String      @unique
+  verifyTokenHash String    @unique
+  issuedAt      DateTime    @default(now())
+  claimedAt     DateTime?
+  claimedById   String?
+  participant   Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  claimedBy     AdminUser?  @relation(fields: [claimedById], references: [id])
+}
+
+model OfflinePrizeClaim {
+  id                     String    @id @default(cuid())
+  eventId                String
+  fullName               String
+  phoneNormalized        String
+  universityIdNormalized String
+  offlineParticipantId   String    @unique
+  claimedAt              DateTime  @default(now())
+  claimedById            String
+  claimedBy              AdminUser @relation(fields: [claimedById], references: [id])
+  event                  Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  @@unique([eventId, universityIdNormalized])
+}
+
+model AdminUser {
+  id            String              @id @default(cuid())
+  email         String              @unique
+  name          String
+  passwordHash  String
+  active        Boolean             @default(true)
+  sessions      AdminSession[]
+  prizeClaims   PrizeClaim[]
+  offlineClaims OfflinePrizeClaim[]
+  auditLogs     AuditLog[]
+  createdAt     DateTime            @default(now())
+}
+
+model AdminSession {
+  id        String    @id @default(cuid())
+  adminId   String
+  tokenHash String    @unique
+  expiresAt DateTime
+  admin     AdminUser @relation(fields: [adminId], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id        String    @id @default(cuid())
+  adminId   String?
+  action    String
+  entity    String
+  entityId  String
+  metadata  Json?
+  createdAt DateTime  @default(now())
+  admin     AdminUser? @relation(fields: [adminId], references: [id])
+  @@index([entity, entityId])
+}
